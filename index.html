@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, pinitial-scale=1.0">
+    <title>BAHIMPU.TRIP | Pendaftaran Open Trip & Penikmat Alam KALSEL</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        forest: {
+                            950: '#07130d',
+                            900: '#0f291e',
+                            800: '#163a2b',
+                            700: '#1f4e3a',
+                            600: '#29664c',
+                        },
+                        gold: {
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar untuk kenyamanan di panel admin & mobile */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-[#f8faf9] text-stone-800 font-sans antialiased selection:bg-gold-500 selection:text-forest-950">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none max-w-xs w-full"></div>
+
+    <!-- Admin Active Banner (Muncul saat Mode Admin terbuka/aktif) -->
+    <div id="adminStatusBanner" class="hidden bg-gold-500 text-forest-950 text-xs font-bold py-2 px-4 text-center sticky top-0 z-50 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-3">
+            <span class="flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> MODE PEMBUAT / ADMIN AKTIF — Perubahan otomatis tersimpan & langsung tampil di web.
+            </span>
+            <button type="button" onclick="openAdminPanel()" class="underline hover:text-forest-800">Buka Panel Pengaturan</button>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-40 bg-forest-900/95 backdrop-blur-md border-b border-forest-800 text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-2">
+            <a href="#" class="flex items-center gap-3 group min-w-0">
+                <!-- Logo Gunung SVG -->
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 p-0.5 shadow-lg shadow-gold-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                    <div class="w-full h-full bg-forest-950 rounded-[10px] flex items-center justify-center">
+                        <svg class="w-6 h-6 text-gold-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
+                            <path d="M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.74 1.94 5.49 2 8.23.19"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="truncate">
+                    <span id="uiBrandName" class="font-display font-extrabold text-base sm:text-lg tracking-tight text-white block leading-none truncate">
+                        BAHIMPU.TRIP
+                    </span>
+                    <span id="uiBrandSubtitle" class="text-[11px] text-gold-400 font-medium tracking-wider uppercase block mt-0.5 truncate">
+                        Penikmat Alam KALSEL
+                    </span>
+                </div>
+            </a>
+
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <a href="#form-pendaftaran" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-forest-950 font-bold text-xs sm:text-sm transition-all shadow-md">
+                    <span>Daftar Trip</span>
+                </a>
+                <!-- Tombol Khusus Pembuat / Mode Admin -->
+                <button type="button" id="btnToggleAdmin" onclick="handleAdminButtonClick()"
+                    class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-700 border border-forest-600/80 text-stone-100 font-semibold text-xs transition-all shadow-sm">
+                    <i data-lucide="settings" class="w-3.5 h-3.5 text-gold-400"></i>
+                    <span>Kelola Web <span class="hidden md:inline">/ Mode Admin</span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-gradient-to-br from-forest-950 via-forest-900 to-forest-800 text-white border-b border-forest-800">
+        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#facc15_1px,transparent_1px)] [background-size:20px_20px]"></div>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 relative z-10">
+            <div class="max-w-3xl">
+                <div class="inline-flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full bg-forest-950/70 border border-forest-700 text-xs font-semibold text-gold-400 mb-4">
+                    <span>🏔️ Open Trip Kalimantan Selatan</span>
+                    <span class="text-forest-600">•</span>
+                    <span id="uiHashtag" class="text-emerald-300">#manggahdingae</span>
+                </div>
+                <h1 id="uiMotto" class="font-display text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.18] mb-4">
+                    "BAHAGIA BUHAN PIAN, HIMUNG PULANG KAMI"
+                </h1>
+                <p id="uiHeroDesc" class="text-stone-300 text-sm sm:text-base leading-relaxed mb-6 max-w-2xl">
+                    Jelajahi puncak-puncak eksotis Banua bersama keluarga besar <strong class="text-white">BAHIMPU.TRIP</strong>. Mengutamakan keselamatan peserta dengan standar tim SAR, solidaritas tinggi, dan pengalaman mendaki yang tak terlupakan.
+                </p>
+                <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+                    <a href="#form-pendaftaran" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-400 text-forest-950 font-bold text-sm transition-all shadow-lg shadow-gold-500/20">
+                        <span>Isi Formulir Pendaftaran</span>
+                        <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                    </a>
+                    <div class="flex flex-wrap items-center gap-4 text-xs text-stone-300">
+                        <span class="flex items-center gap-1.5"><i data-lucide="shield-check" class="w-4 h-4 text-gold-400"></i> Standar Safety & SAR</span>
+                        <span class="flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4 text-gold-400"></i> Terbuka untuk Pemula</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Form Container -->
+    <main id="form-pendaftaran" class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <form id="tripForm" novalidate class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+            
+            <!-- Left Column: Steps 1, 2, 3 (8 Cols) -->
+            <div class="lg:col-span-8 space-y-7">
+
+                <!-- STEP 1: DATA PENDAFTARAN PESERTA -->
+                <section class="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-7 shadow-sm">
+                    <div class="flex items-center gap-3 pb-4 mb-5 border-b border-stone-100">
+                        <span class="w-8 h-8 rounded-xl bg-forest-900 text-gold-400 font-extrabold text-sm flex items-center justify-center shrink-0">1</span>
+                        <div>
+                            <h2 class="font-display text-lg sm:text-xl font-bold text-forest-950">Data Pendaftaran Peserta</h2>
+                            <p class="text-xs text-stone-500">Lengkapi identitas diri untuk pendataan manifest & keamanan tim SAR</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                        <!-- Nama Lengkap -->
+                        <div class="sm:col-span-2">
+                            <label for="namaLengkap" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                                Nama Lengkap <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="user" class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" id="namaLengkap" required placeholder="Contoh: Muhammad Rizky"
+                                    class="w-full bg-stone-50 border border-stone-300 focus:bg-white focus:border-forest-700 focus:ring-2 focus:ring-forest-700/15 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder-stone-400 outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Nomor WhatsApp Aktif -->
+                        <div>
+                            <label for="waPeserta" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                                Nomor WhatsApp Aktif <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="phone" class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <input type="tel" id="waPeserta" required placeholder="Contoh: 081234567890"
+                                    class="w-full bg-stone-50 border border-stone-300 focus:bg-white focus:border-forest-700 focus:ring-2 focus:ring-forest-700/15 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder-stone-400 outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Domisili / Kota Asal -->
+                        <div>
+                            <label for="domisili" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                                Domisili / Kota Asal <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" id="domisili" required placeholder="Contoh: Banjarmasin / Banjarbaru"
+                                    class="w-full bg-stone-50 border border-stone-300 focus:bg-white focus:border-forest-700 focus:ring-2 focus:ring-forest-700/15 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder-stone-400 outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Kontak Darurat -->
+                        <div class="sm:col-span-2">
+                            <label for="kontakDarurat" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                                Kontak Darurat (Nama Keluarga & No. HP untuk Keamanan SAR) <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="heart-pulse" class="w-4 h-4 text-red-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" id="kontakDarurat" required placeholder="Contoh: Ibu Siti (Orang Tua) - 0852xxxxxxxx"
+                                    class="w-full bg-stone-50 border border-stone-300 focus:bg-white focus:border-forest-700 focus:ring-2 focus:ring-forest-700/15 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder-stone-400 outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Tanggal Keberangkatan -->
+                        <div>
+                            <label for="tanggalTrip" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                                Tanggal Keberangkatan
+                            </label>
+                            <input type="date" id="tanggalTrip"
+                                class="w-full bg-stone-50 border border-stone-300 focus:bg-white focus:border-forest-700 focus:ring-2 focus:ring-forest-700/15 rounded-xl px-4 py-3 text-sm text-stone-900 outline-none transition-all">
+                        </div>
+
+                        <!-- Jumlah Peserta -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                                Jumlah Peserta (Orang)
+                            </label>
+                            <div class="flex items-center bg-stone-50 border border-stone-300 rounded-xl p-1">
+                                <button type="button" id="btnMinus" aria-label="Kurangi peserta"
+                                    class="w-10 h-10 rounded-lg bg-white border border-stone-200 hover:bg-stone-100 text-forest-900 flex items-center justify-center transition-colors active:scale-95 shadow-xs">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <input type="number" id="jumlahPeserta" value="1" min="1" max="50" readonly
+                                    class="w-full text-center bg-transparent font-extrabold text-base text-forest-900 outline-none">
+                                <button type="button" id="btnPlus" aria-label="Tambah peserta"
+                                    class="w-10 h-10 rounded-lg bg-white border border-stone-200 hover:bg-stone-100 text-forest-900 flex items-center justify-center transition-colors active:scale-95 shadow-xs">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STEP 2: PILIH DESTINASI & PAKET -->
+                <section class="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-7 shadow-sm">
+                    <div class="flex items-center gap-3 pb-4 mb-5 border-b border-stone-100">
+                        <span class="w-8 h-8 rounded-xl bg-forest-900 text-gold-400 font-extrabold text-sm flex items-center justify-center shrink-0">2</span>
+                        <div>
+                            <h2 class="font-display text-lg sm:text-xl font-bold text-forest-950">Pilih Destinasi Gunung & Paket</h2>
+                            <p class="text-xs text-stone-500">Pilih gunung tujuan serta paket harga (Paket A, B, atau C) per orang</p>
+                        </div>
+                    </div>
+
+                    <!-- Daftar Destinasi (Diisi oleh renderDestinations()) -->
+                    <div id="destinationsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+                    <!-- Kotak Detail Fasilitas Paket Terpilih (Include & Exclude) -->
+                    <div id="selectedPackageDetailBox" class="mt-5 bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 shadow-2xs">
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-stone-100">
+                            <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-forest-950">
+                                <i data-lucide="backpack" class="w-4 h-4 text-gold-600 shrink-0"></i>
+                                <span id="detailFacilityTitle">Rincian Include & Exclude Paket Terpilih</span>
+                            </div>
+                            <span id="detailPackagePriceTag" class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-forest-900 text-gold-400">
+                                Rp 133.000 / org
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Include -->
+                            <div class="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5">
+                                <div class="flex items-center gap-1.5 text-xs font-extrabold text-emerald-900 uppercase tracking-wider mb-2">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                    <span>Include (Termasuk)</span>
+                                </div>
+                                <ul id="detailIncludeList" class="space-y-1.5 text-xs text-stone-700">
+                                    <!-- Diisi via JS -->
+                                </ul>
+                            </div>
+
+                            <!-- Exclude -->
+                            <div class="bg-rose-50/70 border border-rose-200/80 rounded-xl p-3.5">
+                                <div class="flex items-center gap-1.5 text-xs font-extrabold text-rose-900 uppercase tracking-wider mb-2">
+                                    <i data-lucide="x-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                                    <span>Exclude (Tidak Termasuk)</span>
+                                </div>
+                                <ul id="detailExcludeList" class="space-y-1.5 text-xs text-stone-700">
+                                    <!-- Diisi via JS -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STEP 3: PEMBAYARAN PER ORANG & METODE BAYAR -->
+                <section class="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-7 shadow-sm">
+                    <div class="flex items-center gap-3 pb-4 mb-5 border-b border-stone-100">
+                        <span class="w-8 h-8 rounded-xl bg-forest-900 text-gold-400 font-extrabold text-sm flex items-center justify-center shrink-0">3</span>
+                        <div>
+                            <h2 class="font-display text-lg sm:text-xl font-bold text-forest-950">Pembayaran Per Orang & Metode Bayar</h2>
+                            <p class="text-xs text-stone-500">Pilih skema pembayaran Lunas atau DP serta metode transfer yang diinginkan</p>
+                        </div>
+                    </div>
+
+                    <!-- Skema Pembayaran: Lunas vs DP -->
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
+                            Skema Pembayaran
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button type="button" data-scheme="LUNAS" class="scheme-btn flex flex-col items-start p-3.5 rounded-xl border-2 border-forest-900 bg-forest-900/5 text-left transition-all">
+                                <div class="flex items-center justify-between w-full mb-1">
+                                    <span class="font-bold text-sm text-forest-950">Bayar Lunas (100%)</span>
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-forest-800 scheme-icon"></i>
+                                </div>
+                                <span class="text-xs text-stone-500">Langsung lunas tanpa sisa tagihan</span>
+                            </button>
+
+                            <button type="button" data-scheme="DP" class="scheme-btn flex flex-col items-start p-3.5 rounded-xl border border-stone-300 bg-white hover:border-stone-400 text-left transition-all">
+                                <div class="flex items-center justify-between w-full mb-1">
+                                    <span id="uiDpOptionTitle" class="font-bold text-sm text-stone-800">Booking DP (50%)</span>
+                                    <i data-lucide="circle" class="w-4 h-4 text-stone-400 scheme-icon"></i>
+                                </div>
+                                <span class="text-xs text-stone-500">Sisa dilunasi saat meetpoint keberangkatan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Metode Pembayaran: QRIS vs Transfer Bank/E-Wallet -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
+                            Metode Pembayaran
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" data-method="QRIS" class="method-btn flex items-center gap-2.5 p-3.5 rounded-xl border-2 border-forest-900 bg-forest-900/5 text-left transition-all">
+                                <i data-lucide="qr-code" class="w-5 h-5 text-forest-800 shrink-0"></i>
+                                <div>
+                                    <span class="font-bold text-sm text-forest-950 block">QRIS All Payment</span>
+                                    <span class="text-[11px] text-stone-500">Scan M-Banking / E-Wallet</span>
+                                </div>
+                            </button>
+
+                            <button type="button" data-method="TRANSFER" class="method-btn flex items-center gap-2.5 p-3.5 rounded-xl border border-stone-300 bg-white hover:border-stone-400 text-left transition-all">
+                                <i data-lucide="landmark" class="w-5 h-5 text-stone-500 shrink-0"></i>
+                                <div>
+                                    <span class="font-bold text-sm text-stone-800 block">Transfer Bank / E-Wallet</span>
+                                    <span class="text-[11px] text-stone-500">Salin Nomor Rekening</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel QRIS -->
+                    <div id="panel-qris" class="bg-stone-50 border border-stone-200 rounded-xl p-4 sm:p-5">
+                        <div class="flex flex-col sm:flex-row items-center gap-5">
+                            <div id="qrisDisplayWrapper" class="bg-white p-3 rounded-xl border border-stone-200 shadow-xs shrink-0 text-center">
+                                <!-- Diisi oleh renderQrisDisplay() -->
+                            </div>
+                            <div class="flex-1 text-center sm:text-left">
+                                <span class="inline-block text-xs font-bold text-gold-600 uppercase tracking-wider mb-1">Pembayaran Instan via QRIS</span>
+                                <h4 id="uiQrisMerchantName" class="text-sm font-bold text-forest-950 mb-1.5">BAHIMPU.TRIP KALSEL</h4>
+                                <p id="uiPaymentNote" class="text-xs text-stone-600 leading-relaxed mb-3">
+                                    Scan kode QR menggunakan M-Banking atau E-Wallet (DANA, OVO, GoPay, ShopeePay). Simpan screenshot bukti pembayaran untuk dikirim ke WhatsApp Admin.
+                                </p>
+                                <button type="button" id="btnDownloadQris" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-forest-900 hover:bg-forest-800 text-xs font-semibold text-white transition-colors">
+                                    <i data-lucide="download" class="w-3.5 h-3.5 text-gold-400"></i> Unduh Gambar QRIS
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Daftar Rekening Bank / E-Wallet Dinamis -->
+                    <div id="panel-transfer" class="hidden bg-stone-50 border border-stone-200 rounded-xl p-4 sm:p-5 space-y-3">
+                        <p class="text-xs text-stone-600 mb-2">Silakan transfer sesuai nominal tagihan ke salah satu rekening resmi berikut:</p>
+                        <div id="bankAccountsList" class="space-y-2.5">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Right Column: Sticky Summary & Submit (4 Cols) -->
+            <aside class="lg:col-span-4 lg:sticky lg:top-20 space-y-5">
+                <div class="bg-forest-900 text-white border border-forest-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+                    <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-forest-800">
+                        <h3 class="font-display font-bold text-base text-white flex items-center gap-2">
+                            <i data-lucide="receipt" class="w-4 h-4 text-gold-400"></i>
+                            Ringkasan Biaya Trip
+                        </h3>
+                        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gold-500/20 text-gold-400 border border-gold-500/30">
+                            Per Orang
+                        </span>
+                    </div>
+
+                    <!-- Rincian Pilihan -->
+                    <div class="space-y-3 text-sm mb-5">
+                        <div>
+                            <span class="text-xs text-stone-400 block">Destinasi Pilihan</span>
+                            <span id="summaryDestName" class="font-bold text-white block mt-0.5 leading-snug">
+                                Gunung Pindihan, Sasarian, Pingganin
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-forest-800">
+                            <span class="text-xs text-stone-400">Pilihan Paket</span>
+                            <span id="summaryPackageBadge" class="font-bold text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300">
+                                Paket A
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-stone-400">Harga / Orang</span>
+                            <span id="summaryPricePerPerson" class="font-semibold text-stone-100">Rp 133.000</span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-stone-400">Jumlah Peserta</span>
+                            <span id="summaryPax" class="font-semibold text-stone-100">1 Orang</span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-stone-400">Subtotal Keseluruhan</span>
+                            <span id="summarySubtotal" class="font-semibold text-stone-100">Rp 133.000</span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-stone-400">Skema & Metode</span>
+                            <span id="summaryMethod" class="text-xs font-semibold text-gold-400">LUNAS • QRIS</span>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-forest-800">
+                            <span class="text-xs text-stone-400">WhatsApp Admin</span>
+                            <span id="summaryAdminWa" class="text-xs font-mono text-emerald-300">+62 812-5199-8877</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Tagihan Box -->
+                    <div class="bg-forest-950 border border-gold-500/40 rounded-xl p-4 mb-5">
+                        <div class="flex items-center justify-between mb-1">
+                            <span id="summaryPayLabel" class="text-xs font-semibold text-stone-300">Total Bayar (Lunas 100%)</span>
+                        </div>
+                        <div id="summaryTotalPay" class="font-display text-2xl sm:text-3xl font-extrabold text-gold-400 tracking-tight">
+                            Rp 133.000
+                        </div>
+                        <div id="summaryRemainingNote" class="hidden text-[11px] text-stone-400 mt-1">
+                            Sisa pelunasan saat meetpoint: <span id="summaryRemainingAmount" class="text-stone-200 font-semibold">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit"
+                        class="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-gold-500 to-amber-500 hover:from-gold-400 hover:to-amber-400 text-forest-950 font-extrabold text-sm sm:text-base shadow-lg shadow-gold-500/25 transition-all active:scale-[0.99] flex items-center justify-center gap-2">
+                        <span>Konfirmasi & Lanjut ke WA</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+
+                    <p class="text-[11px] text-center text-stone-400 mt-3 leading-relaxed">
+                        Pendaftaran akan menghasilkan Kode Booking dan membuka chat WhatsApp Admin secara otomatis.
+                    </p>
+                </div>
+            </aside>
+        </form>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-stone-200 bg-white py-8 mt-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+            <div class="text-center sm:text-left">
+                <span id="uiFooterBrand" class="font-display font-bold text-forest-950">BAHIMPU.TRIP</span> — Open Trip & Penikmat Alam Kalimantan Selatan
+                <p id="uiFooterMotto" class="text-stone-400 mt-0.5">"BAHAGIA BUHAN PIAN, HIMUNG PULANG KAMI" • #manggahdingae</p>
+            </div>
+            <div class="text-stone-400">
+                Salam Lestari & Safety First!
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: BUKTI BOOKING & KIRIM KE WHATSAPP ADMIN (UNTUK PESERTA)       -->
+    <!-- ===================================================================== -->
+    <div id="receiptModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div class="bg-white border border-stone-200 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+            <div class="bg-forest-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-base">Pendaftaran Berhasil Dicatat!</h3>
+                        <p class="text-[11px] text-stone-300">Kode Booking: <span id="modalBookingCode" class="text-gold-400 font-mono font-bold">BHM-0000</span></p>
+                    </div>
+                </div>
+                <button type="button" id="closeModalBtn" class="p-1.5 rounded-lg text-stone-300 hover:text-white hover:bg-forest-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-5 sm:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs whitespace-pre-wrap font-mono text-stone-800 leading-relaxed" id="modalPreviewText"></div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2.5">
+                    <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                    <span>Klik tombol hijau di bawah untuk mengirim rincian pendaftaran ini langsung ke <strong>WhatsApp Admin</strong>, lalu lampirkan foto bukti transfer/QRIS Anda.</span>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-stone-50 border-t border-stone-200 flex flex-col sm:flex-row gap-3">
+                <button type="button" id="btnCopyReceipt"
+                    class="py-3 px-4 rounded-xl bg-white border border-stone-300 hover:bg-stone-100 text-stone-800 font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="copy" class="w-4 h-4 text-forest-800"></i>
+                    <span>Salin</span>
+                </button>
+                <a id="btnSendWa" href="#" target="_blank" rel="noopener noreferrer" onclick="markLatestBookingWaSent()"
+                    class="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>Kirim Konfirmasi ke WhatsApp Admin</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: LOGIN PIN MODE ADMIN / PEMBUAT                               -->
+    <!-- ===================================================================== -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div class="bg-white border border-stone-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-forest-900 text-gold-400 flex items-center justify-center">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-base text-forest-950">Akses Mode Pembuat</h3>
+                        <p class="text-[11px] text-stone-500">Masukkan PIN Admin untuk mengedit web</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminLogin()" class="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="adminLoginForm" class="space-y-4">
+                <div>
+                    <label for="adminPinInput" class="block text-xs font-bold text-stone-600 uppercase tracking-wider mb-1.5">PIN Keamanan</label>
+                    <input type="password" id="adminPinInput" inputmode="numeric" maxlength="12" placeholder="Masukkan PIN..."
+                        class="w-full bg-stone-50 border border-stone-300 focus:border-forest-800 rounded-xl px-4 py-3 text-center font-mono text-lg tracking-widest text-stone-900 outline-none">
+                    <p class="text-[11px] text-stone-500 mt-2 bg-stone-100 p-2.5 rounded-lg">
+                        💡 <strong>Petunjuk:</strong> PIN default bawaan adalah <code class="font-bold text-forest-900 bg-white px-1.5 py-0.5 rounded border">1234</code> (dapat diubah di dalam menu Keamanan).
+                    </p>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-forest-900 hover:bg-forest-800 text-gold-400 font-bold text-sm transition-colors">
+                    Masuk ke Pengaturan Web
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: PANEL PENGATURAN PEMBUAT / MODE ADMIN (LIVE EDITOR LENGKAP)  -->
+    <!-- ===================================================================== -->
+    <div id="adminPanelModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm overflow-y-auto">
+        <div class="min-h-screen flex items-center justify-center p-2 sm:p-5">
+            <div class="bg-white border border-stone-200 rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+                
+                <!-- Top Header Panel Admin -->
+                <div class="bg-forest-950 text-white px-5 py-4 flex items-center justify-between border-b border-forest-800 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-gold-500 text-forest-950 flex items-center justify-center font-bold">
+                            <i data-lucide="sliders" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display font-bold text-base sm:text-lg leading-tight">Panel Pembuat / Pengaturan Web</h2>
+                            <p class="text-[11px] text-stone-400">Ubah destinasi, harga, No. WA, rekening, QRIS & unduh file HTML siap pakai</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="logoutAdmin()" class="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 text-xs font-semibold transition-colors">
+                            Kunci
+                        </button>
+                        <button type="button" onclick="closeAdminPanel()" class="p-2 rounded-lg bg-forest-800 hover:bg-forest-700 text-white transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="bg-stone-100 px-4 pt-3 border-b border-stone-200 flex gap-1.5 overflow-x-auto shrink-0">
+                    <button type="button" data-tab="tab-brand" class="admin-tab-btn px-4 py-2.5 rounded-t-xl font-bold text-xs sm:text-sm bg-white text-forest-950 border-t border-x border-stone-200 flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="message-square" class="w-4 h-4 text-gold-600"></i> 1. Identitas & No. WA
+                    </button>
+                    <button type="button" data-tab="tab-destinations" class="admin-tab-btn px-4 py-2.5 rounded-t-xl font-semibold text-xs sm:text-sm text-stone-600 hover:text-forest-950 flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="mountain" class="w-4 h-4 text-forest-700"></i> 2. Destinasi & Paket
+                    </button>
+                    <button type="button" data-tab="tab-payment" class="admin-tab-btn px-4 py-2.5 rounded-t-xl font-semibold text-xs sm:text-sm text-stone-600 hover:text-forest-950 flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="wallet" class="w-4 h-4 text-emerald-700"></i> 3. Rekening & QRIS
+                    </button>
+                    <button type="button" data-tab="tab-database" class="admin-tab-btn px-4 py-2.5 rounded-t-xl font-semibold text-xs sm:text-sm text-stone-600 hover:text-forest-950 flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="database" class="w-4 h-4 text-indigo-700"></i> 4. Database & Log WA
+                        <span id="adminDbBadgeCount" class="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-full bg-forest-900 text-gold-400 font-bold">0</span>
+                    </button>
+                    <button type="button" data-tab="tab-export" class="admin-tab-btn px-4 py-2.5 rounded-t-xl font-semibold text-xs sm:text-sm text-stone-600 hover:text-forest-950 flex items-center gap-1.5 whitespace-nowrap">
+                        <i data-lucide="download-cloud" class="w-4 h-4 text-blue-700"></i> 5. Export HTML & Keamanan
+                    </button>
+                </div>
+
+                <!-- Tab Content Container -->
+                <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
+
+                    <!-- ==================== TAB 1: IDENTITAS & KONTAK WA ==================== -->
+                    <div id="tab-brand" class="admin-tab-content space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Nama Brand Trip</label>
+                                <input type="text" id="cfgBrandName" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Subjudul / Tagline Daerah</label>
+                                <input type="text" id="cfgBrandSubtitle" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Motto / Slogan Utama</label>
+                                <input type="text" id="cfgMotto" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Hashtag Komunitas</label>
+                                <input type="text" id="cfgHashtag" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Nomor WhatsApp Admin (Tujuan Konfirmasi)</label>
+                                <div class="flex gap-2">
+                                    <input type="tel" id="cfgAdminWa" placeholder="6281234567890" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm font-mono">
+                                    <button type="button" onclick="testAdminWaLink()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shrink-0 flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Tes WA
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-stone-500 mt-1">Gunakan awalan 62 atau 08 (contoh: 6281234567890).</p>
+                            </div>
+
+                            <!-- Pengaturan Otomatis Kirim WA -->
+                            <div class="sm:col-span-2 bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <span class="text-xs font-extrabold text-emerald-950 uppercase tracking-wider block">Database Otomatis Kirim WA</span>
+                                    <p class="text-xs text-stone-600 mt-0.5">
+                                        Setiap pendaftaran otomatis masuk ke database lokal. Aktifkan opsi ini agar tab WhatsApp langsung terbuka otomatis setelah submit.
+                                    </p>
+                                </div>
+                                <label class="inline-flex items-center gap-2.5 cursor-pointer shrink-0 bg-white px-3.5 py-2 rounded-xl border border-emerald-300 shadow-2xs">
+                                    <input type="checkbox" id="cfgAutoOpenWa" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
+                                    <span class="text-xs font-bold text-emerald-950">Auto-Buka WhatsApp</span>
+                                </label>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Deskripsi Singkat Hero</label>
+                                <textarea id="cfgHeroDesc" rows="2" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm"></textarea>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-bold text-stone-700 uppercase">Template Pesan WhatsApp Otomatis</label>
+                                    <button type="button" onclick="resetWaTemplate()" class="text-[11px] text-forest-800 underline font-semibold">Reset Template Default</button>
+                                </div>
+                                <textarea id="cfgWaTemplate" rows="9" class="w-full border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs font-mono bg-stone-50"></textarea>
+                                <p class="text-[11px] text-stone-500 mt-1.5">
+                                    Variabel tersedia: <code class="bg-stone-100 px-1 rounded">{kode}</code>, <code class="bg-stone-100 px-1 rounded">{nama}</code>, <code class="bg-stone-100 px-1 rounded">{wa_peserta}</code>, <code class="bg-stone-100 px-1 rounded">{domisili}</code>, <code class="bg-stone-100 px-1 rounded">{darurat}</code>, <code class="bg-stone-100 px-1 rounded">{tanggal}</code>, <code class="bg-stone-100 px-1 rounded">{destinasi}</code>, <code class="bg-stone-100 px-1 rounded">{paket}</code>, <code class="bg-stone-100 px-1 rounded">{include}</code>, <code class="bg-stone-100 px-1 rounded">{exclude}</code>, <code class="bg-stone-100 px-1 rounded">{peserta}</code>, <code class="bg-stone-100 px-1 rounded">{total}</code>, <code class="bg-stone-100 px-1 rounded">{bayar}</code>, <code class="bg-stone-100 px-1 rounded">{sisa}</code>, <code class="bg-stone-100 px-1 rounded">{skema}</code>, <code class="bg-stone-100 px-1 rounded">{metode}</code>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-stone-200 flex justify-end">
+                            <button type="button" onclick="saveBrandSettings()" class="px-5 py-2.5 rounded-xl bg-forest-900 hover:bg-forest-800 text-gold-400 font-bold text-sm flex items-center gap-2">
+                                <i data-lucide="save" class="w-4 h-4"></i> Simpan Identitas & Kontak WA
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ==================== TAB 2: KELOLA DESTINASI & PAKET ==================== -->
+                    <div id="tab-destinations" class="admin-tab-content hidden space-y-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h3 class="font-bold text-base text-forest-950">Daftar Destinasi & Paket Trip</h3>
+                                <p class="text-xs text-stone-500">Tambah gunung baru, ubah harga Paket A / B / C, atau tandai slot penuh.</p>
+                            </div>
+                            <button type="button" onclick="openDestEditor()" class="px-4 py-2.5 rounded-xl bg-forest-900 hover:bg-forest-800 text-gold-400 font-bold text-xs sm:text-sm flex items-center gap-1.5">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Destinasi Baru
+                            </button>
+                        </div>
+
+                        <!-- Form Tambah / Edit Destinasi (Inline Collapsible) -->
+                        <div id="destEditorBox" class="hidden bg-stone-50 border-2 border-forest-800 rounded-2xl p-4 sm:p-5 space-y-4">
+                            <div class="flex items-center justify-between border-b border-stone-200 pb-2.5">
+                                <h4 id="destEditorTitle" class="font-bold text-sm text-forest-950">Tambah Destinasi Baru</h4>
+                                <button type="button" onclick="closeDestEditor()" class="text-xs text-stone-500 hover:text-stone-800 font-semibold">Batal</button>
+                            </div>
+                            <input type="hidden" id="editDestId">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[11px] font-bold text-stone-600 uppercase mb-1">Nama Gunung / Destinasi *</label>
+                                    <input type="text" id="editDestName" placeholder="Contoh: Gunung Halau-Halau 1901 MDPL" class="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-stone-600 uppercase mb-1">Ketinggian / Info Singkat</label>
+                            <!-- Paket A, B, C lengkap dengan Include & Exclude -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
+                                <!-- Paket A -->
+                                <div class="bg-white p-3.5 rounded-xl border border-stone-200 space-y-2.5">
+                                    <span class="text-xs font-extrabold text-emerald-700 block">PAKET A (Wajib)</span>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-stone-500 uppercase">Harga (Rp)</label>
+                                        <input type="number" id="editPriceA" placeholder="133000" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-emerald-700 uppercase">Include (1 item per baris)</label>
+                                        <textarea id="editIncludeA" rows="4" placeholder="Simaksi / Tiket Masuk&#10;Guide & Sweeper&#10;Tim SAR & P3K&#10;Dokumentasi & Stiker" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-rose-700 uppercase">Exclude (1 item per baris)</label>
+                                        <textarea id="editExcludeA" rows="3" placeholder="Transportasi ke basecamp&#10;Logistik makan & tenda&#10;Perlengkapan pribadi" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Paket B -->
+                                <div class="bg-white p-3.5 rounded-xl border border-stone-200 space-y-2.5">
+                                    <span class="text-xs font-extrabold text-amber-700 block">PAKET B (Wajib)</span>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-stone-500 uppercase">Harga (Rp)</label>
+                                        <input type="number" id="editPriceB" placeholder="155000" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-emerald-700 uppercase">Include (1 item per baris)</label>
+                                        <textarea id="editIncludeB" rows="4" placeholder="Semua fasilitas Paket A&#10;Logistik makan trip&#10;Tenda kelompok&#10;Air minum / kopi santai" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-rose-700 uppercase">Exclude (1 item per baris)</label>
+                                        <textarea id="editExcludeB" rows="3" placeholder="Transportasi luar kota&#10;Carrier & sleeping bag pribadi&#10;Obat-obatan khusus pribadi" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Paket C (Opsional) -->
+                                <div class="bg-white p-3.5 rounded-xl border border-dashed border-stone-300 space-y-2.5">
+                                    <span class="text-xs font-extrabold text-blue-700 block">PAKET C (Opsional)</span>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-stone-500 uppercase">Harga (0 jika tidak ada)</label>
+                                        <input type="number" id="editPriceC" placeholder="0" class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-emerald-700 uppercase">Include (1 item per baris)</label>
+                                        <textarea id="editIncludeC" rows="4" placeholder="Contoh: Paket VIP + Porter..." class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-rose-700 uppercase">Exclude (1 item per baris)</label>
+                                        <textarea id="editExcludeC" rows="3" placeholder="Contoh: Keperluan pribadi..." class="w-full border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button type="button" onclick="closeDestEditor()" class="px-4 py-2 rounded-xl border border-stone-300 text-xs font-bold text-stone-600">Batal</button>
+                                <button type="button" onclick="saveDestinationItem()" class="px-5 py-2 rounded-xl bg-forest-900 text-gold-400 text-xs font-bold">Simpan Destinasi</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabel / List Destinasi Admin -->
+                        <div id="adminDestinationsList" class="space-y-3">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ==================== TAB 3: METODE PEMBAYARAN & QRIS ==================== -->
+                    <div id="tab-payment" class="admin-tab-content hidden space-y-6">
+                        <!-- Pengaturan DP & Catatan -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                            <div>
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Persentase DP (%)</label>
+                                <input type="number" id="cfgDpPercent" min="10" max="90" value="50" class="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2 text-sm font-bold">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Nama Merchant QRIS</label>
+                                <input type="text" id="cfgQrisMerchant" class="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2 text-sm">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label class="block text-xs font-bold text-stone-700 uppercase mb-1">Catatan Instruksi Pembayaran</label>
+                                <input type="text" id="cfgPaymentNote" class="w-full bg-white border border-stone-300 rounded-xl px-3.5 py-2 text-sm">
+                            </div>
+                            <div class="sm:col-span-3 flex justify-end">
+                                <button type="button" onclick="savePaymentGeneralSettings()" class="px-4 py-2 rounded-xl bg-forest-900 text-gold-400 text-xs font-bold">Simpan Pengaturan DP & Catatan</button>
+                            </div>
+                        </div>
+
+                        <!-- Upload Gambar QRIS Asli -->
+                        <div class="bg-white border border-stone-200 rounded-xl p-4 sm:p-5">
+                            <h4 class="font-bold text-sm text-forest-950 mb-1">Gambar Kode QRIS Asli</h4>
+                            <p class="text-xs text-stone-500 mb-3">Unggah foto/gambar QRIS milik Anda (JPG/PNG) agar pengunjung dapat langsung scan QRIS asli Anda.</p>
+                            <div class="flex flex-col sm:flex-row items-center gap-4">
+                                <div id="adminQrisPreview" class="w-28 h-28 rounded-xl border border-stone-200 bg-stone-50 flex items-center justify-center overflow-hidden shrink-0">
+                                    <!-- Preview QRIS -->
+                                </div>
+                                <div class="space-y-2.5 flex-1">
+                                    <input type="file" id="qrisFileInput" accept="image/*" class="block w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-forest-900 file:text-gold-400 hover:file:bg-forest-800 cursor-pointer">
+                                    <div class="flex flex-wrap gap-2">
+                                        <button type="button" onclick="removeCustomQris()" class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-stone-700">
+                                            Gunakan QRIS Ilustrasi Default
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kelola Daftar Rekening Bank / E-Wallet -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-sm text-forest-950">Daftar Rekening Bank & E-Wallet</h4>
+                            </div>
+
+                            <!-- Form Tambah Rekening -->
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                                <input type="text" id="newBankName" placeholder="Bank / E-Wallet (cth: BRI)" class="bg-white border border-stone-300 rounded-lg px-3 py-2 text-xs">
+                                <input type="text" id="newBankNumber" placeholder="Nomor Rekening / HP" class="bg-white border border-stone-300 rounded-lg px-3 py-2 text-xs font-mono">
+                                <input type="text" id="newBankHolder" placeholder="Atas Nama (a.n.)" class="bg-white border border-stone-300 rounded-lg px-3 py-2 text-xs">
+                                <button type="button" onclick="addBankAccount()" class="px-3 py-2 rounded-lg bg-forest-900 hover:bg-forest-800 text-gold-400 font-bold text-xs flex items-center justify-center gap-1">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Rekening
+                                </button>
+                            </div>
+
+                            <div id="adminBanksList" class="space-y-2">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ==================== TAB 4: DATABASE OTOMATIS & LOG KIRIM WA ==================== -->
+                    <div id="tab-database" class="admin-tab-content hidden space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 class="font-bold text-base text-forest-950">Database Pendaftaran & Log Kirim WA</h3>
+                                <p class="text-xs text-stone-500">Setiap pendaftaran peserta tersimpan otomatis di browser dan siap dikirim/dikirim ulang ke WhatsApp.</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="exportBookingsCsv()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5">
+                                    <i data-lucide="sheet" class="w-3.5 h-3.5"></i> Export CSV
+                                </button>
+                                <button type="button" onclick="exportBookingsJson()" class="px-3 py-2 rounded-xl bg-white border border-stone-300 hover:bg-stone-100 text-stone-800 text-xs font-bold flex items-center gap-1.5">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Export JSON
+                                </button>
+                                <button type="button" onclick="toggleClearDbConfirm()" class="px-3 py-2 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1.5">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Kosongkan Log
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Konfirmasi Kosongkan Database Inline -->
+                        <div id="clearDbConfirmBox" class="hidden bg-red-100 border border-red-300 rounded-xl p-3 text-xs text-red-900 flex flex-wrap items-center justify-between gap-2">
+                            <span>Hapus seluruh data pendaftaran dari database lokal browser?</span>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="document.getElementById('clearDbConfirmBox').classList.add('hidden')" class="px-3 py-1 rounded-lg bg-white font-bold">Batal</button>
+                                <button type="button" onclick="clearAllBookings()" class="px-3 py-1 rounded-lg bg-red-600 text-white font-bold">Ya, Hapus Semua</button>
+                            </div>
+                        </div>
+
+                        <!-- Ringkasan Statistik Singkat -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-stone-50 border border-stone-200 rounded-xl p-3">
+                                <span class="text-[11px] text-stone-500 block">Total Pendaftar</span>
+                                <span id="statTotalBookings" class="text-lg font-extrabold text-forest-950">0</span>
+                            </div>
+                            <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3">
+                                <span class="text-[11px] text-emerald-700 block">WA Terkirim / Dibuka</span>
+                                <span id="statWaSent" class="text-lg font-extrabold text-emerald-800">0</span>
+                            </div>
+                            <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3">
+                                <span class="text-[11px] text-amber-800 block">Menunggu Kirim WA</span>
+                                <span id="statWaPending" class="text-lg font-extrabold text-amber-900">0</span>
+        
